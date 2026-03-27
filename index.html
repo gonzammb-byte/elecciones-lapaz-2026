@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elecciones La Paz 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --bg:#f5f2ec; --bg2:#ffffff; --bg3:#eeebe3;
+  --borde:#e2ddd4; --borde2:#ccc7bb;
+  --texto:#18160f; --texto2:#4a4640; --texto3:#8a847a;
+  --acento:#c0392b; --verde:#27ae60;
+  --font-d:'Source Serif 4',Georgia,serif;
+  --font-b:'DM Sans',sans-serif;
+  --font-m:'DM Mono',monospace;
+  --sh:0 1px 6px rgba(0,0,0,.07);
+  --sh2:0 4px 20px rgba(0,0,0,.10);
+  --r:6px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--texto);font-family:var(--font-b);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+header{background:var(--bg2);border-bottom:1px solid var(--borde);padding:0 22px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:var(--sh);}
+.h-left{display:flex;align-items:baseline;gap:10px;}
+.h-title{font-family:var(--font-d);font-size:19px;font-weight:700;letter-spacing:-.3px;}
+.h-title em{color:var(--acento);font-style:normal;}
+.h-pill{font-family:var(--font-m);font-size:10px;background:var(--acento);color:#fff;padding:2px 8px;border-radius:20px;}
+.h-meta{font-family:var(--font-m);font-size:10px;color:var(--texto3);text-align:right;line-height:1.65;}
+.h-meta strong{color:var(--acento);}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+aside{width:210px;min-width:210px;background:var(--bg2);border-right:1px solid var(--borde);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.aside-sec{padding:14px 0 6px;}
+.aside-lbl{font-family:var(--font-m);font-size:9px;letter-spacing:2px;color:var(--texto3);padding:0 15px 8px;text-transform:uppercase;}
+.aside-hr{border:none;border-top:1px solid var(--borde);margin:4px 15px;}
+.nb{display:flex;align-items:center;gap:8px;width:100%;padding:8px 15px;background:none;border:none;border-left:3px solid transparent;color:var(--texto2);font-family:var(--font-b);font-size:13px;text-align:left;cursor:pointer;transition:all .14s;}
+.nb:hover{color:var(--texto);background:var(--bg3);}
+.nb.active{color:var(--acento);border-left-color:var(--acento);background:rgba(192,57,43,.05);font-weight:500;}
+.nb-icon{width:17px;font-size:13px;text-align:center;opacity:.7;}
+
+.aside-totals{padding:12px 15px 16px;border-top:1px solid var(--borde);margin-top:auto;}
+.at-lbl{font-family:var(--font-m);font-size:9px;letter-spacing:2px;color:var(--texto3);text-transform:uppercase;margin-bottom:9px;}
+.at-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.at-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.at-name{font-family:var(--font-b);font-size:11px;color:var(--texto2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.at-pct{font-family:var(--font-m);font-size:11px;font-weight:500;}
+
+/* MAIN */
+main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.tabs{display:flex;border-bottom:1px solid var(--borde);background:var(--bg2);padding:0 18px;flex-shrink:0;}
+.tb{background:none;border:none;padding:13px 14px;color:var(--texto3);font-family:var(--font-b);font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:6px;transition:all .14s;}
+.tb:hover{color:var(--texto2);}
+.tb.active{color:var(--acento);border-bottom-color:var(--acento);}
+
+/* TABLA VIEW */
+.vt{display:none;flex:1;overflow-y:auto;background:var(--bg);}
+.vt.visible{display:block;}
+.vt-inner{max-width:760px;margin:0 auto;padding:26px 22px 40px;}
+
+.ph{margin-bottom:22px;}
+.ph h2{font-family:var(--font-d);font-size:26px;font-weight:700;line-height:1.2;margin-bottom:6px;}
+.ph-scope{display:inline-block;font-family:var(--font-m);font-size:10px;letter-spacing:.5px;background:var(--bg3);border:1px solid var(--borde);color:var(--texto3);padding:2px 8px;border-radius:20px;}
+
+.actas-card{background:var(--bg2);border:1px solid var(--borde);border-radius:var(--r);padding:13px 16px;margin-bottom:14px;box-shadow:var(--sh);}
+.actas-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.actas-lbl{font-family:var(--font-m);font-size:11px;color:var(--texto3);}
+.actas-val{font-family:var(--font-m);font-size:12px;font-weight:600;}
+.actas-val em{color:var(--verde);font-style:normal;}
+.bar-track-thin{background:var(--bg3);border-radius:20px;height:5px;overflow:hidden;}
+.bar-fill-thin{height:100%;border-radius:20px;background:var(--verde);}
+
+.stats-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:9px;margin-bottom:18px;}
+.stat-c{background:var(--bg2);border:1px solid var(--borde);border-radius:var(--r);padding:11px 13px;box-shadow:var(--sh);}
+.stat-c .l{font-family:var(--font-m);font-size:9px;color:var(--texto3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.stat-c .v{font-family:var(--font-d);font-size:20px;font-weight:600;}
+.stat-c .p{font-family:var(--font-m);font-size:10px;color:var(--acento);margin-top:2px;}
+
+.result-lbl{font-family:var(--font-m);font-size:9px;letter-spacing:2px;color:var(--texto3);text-transform:uppercase;margin-bottom:10px;}
+.result-card{background:var(--bg2);border:1px solid var(--borde);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);}
+.br{display:grid;grid-template-columns:76px 1fr 64px;align-items:center;gap:9px;margin-bottom:3px;}
+.br-sigla{font-family:var(--font-m);font-size:11px;font-weight:500;text-align:right;color:var(--texto2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.br-track{background:var(--bg3);border-radius:20px;height:13px;overflow:hidden;}
+.br-fill{height:100%;border-radius:20px;min-width:3px;transition:width .5s;}
+.br-pct{font-family:var(--font-m);font-size:12px;font-weight:600;}
+.br-votos{font-family:var(--font-m);font-size:9px;color:var(--texto3);text-align:center;margin-bottom:8px;}
+
+.filter-row{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+select.fs{background:var(--bg2);border:1px solid var(--borde);color:var(--texto);font-family:var(--font-b);font-size:12px;padding:7px 28px 7px 10px;border-radius:var(--r);cursor:pointer;min-width:170px;box-shadow:var(--sh);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a847a'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;}
+select.fs:focus{outline:2px solid var(--acento);outline-offset:-1px;}
+
+/* MAPA VIEW */
+.vm{display:none;flex:1;overflow:hidden;}
+.vm.visible{display:flex;}
+#mapa{flex:1;}
+
+/* Panel derecho mapa */
+.mp{width:290px;min-width:290px;background:var(--bg2);border-left:1px solid var(--borde);display:flex;flex-direction:column;overflow-y:auto;}
+.mp-top{padding:14px 15px;border-bottom:1px solid var(--borde);flex-shrink:0;}
+.mp-lbl{font-family:var(--font-m);font-size:9px;letter-spacing:2px;color:var(--texto3);text-transform:uppercase;margin-bottom:6px;}
+select.cs{width:100%;background:var(--bg3);border:1px solid var(--borde);color:var(--texto);font-family:var(--font-b);font-size:12px;padding:7px 26px 7px 10px;border-radius:var(--r);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a847a'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;}
+select.cs:focus{outline:2px solid var(--acento);outline-offset:-1px;}
+
+.mp-hint{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 22px;text-align:center;}
+.mp-hint-ico{font-size:34px;margin-bottom:12px;opacity:.35;}
+.mp-hint-txt{font-family:var(--font-b);font-size:13px;color:var(--texto3);line-height:1.65;}
+
+/* Detalle recinto */
+#rdet{display:none;flex-direction:column;}
+.rd-hdr{padding:14px 15px 11px;border-bottom:1px solid var(--borde);}
+.rd-name{font-family:var(--font-d);font-size:15px;font-weight:700;line-height:1.3;margin-bottom:3px;}
+.rd-sub{font-family:var(--font-m);font-size:10px;color:var(--texto3);line-height:1.6;}
+.rd-sub em{color:var(--acento);font-style:normal;font-weight:500;}
+.rd-close{display:inline-block;margin-top:8px;background:none;border:1px solid var(--borde);border-radius:var(--r);font-family:var(--font-m);font-size:10px;color:var(--texto3);padding:4px 9px;cursor:pointer;transition:all .14s;}
+.rd-close:hover{border-color:var(--acento);color:var(--acento);}
+
+.rd-actas{padding:11px 15px;border-bottom:1px solid var(--borde);}
+.rd-actas-row{display:flex;justify-content:space-between;margin-bottom:6px;}
+.rd-actas-lbl{font-family:var(--font-m);font-size:10px;color:var(--texto3);}
+.rd-actas-val{font-family:var(--font-m);font-size:10px;font-weight:600;}
+
+.rd-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--borde);border-top:1px solid var(--borde);border-bottom:1px solid var(--borde);}
+.rd-stat{background:var(--bg2);padding:9px 12px;}
+.rd-stat .l{font-family:var(--font-m);font-size:9px;color:var(--texto3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+.rd-stat .v{font-family:var(--font-d);font-size:16px;font-weight:600;}
+.rd-stat .p{font-family:var(--font-m);font-size:10px;color:var(--acento);}
+
+.rd-cands{padding:11px 15px;}
+.rd-cands-ttl{font-family:var(--font-m);font-size:9px;letter-spacing:2px;color:var(--texto3);text-transform:uppercase;margin-bottom:10px;}
+.cr{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:7px;margin-bottom:3px;}
+.cr-sigla{font-family:var(--font-m);font-size:10px;font-weight:500;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--texto2);}
+.cr-track{background:var(--bg3);border-radius:20px;height:10px;overflow:hidden;}
+.cr-fill{height:100%;border-radius:20px;min-width:2px;}
+.cr-pct{font-family:var(--font-m);font-size:11px;font-weight:600;}
+.cr-votos{font-family:var(--font-m);font-size:9px;color:var(--texto3);grid-column:2/-1;text-align:left;padding-left:1px;margin-bottom:5px;}
+
+/* Overlays mapa */
+.mf{position:absolute;top:12px;left:12px;z-index:999;display:flex;gap:6px;flex-wrap:wrap;}
+.mf select{background:rgba(255,255,255,.96);border:1px solid var(--borde2);color:var(--texto);font-family:var(--font-b);font-size:12px;padding:6px 26px 6px 10px;border-radius:var(--r);cursor:pointer;box-shadow:var(--sh2);min-width:148px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a847a'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;}
+.ml{position:absolute;bottom:26px;left:12px;z-index:999;background:rgba(255,255,255,.96);border:1px solid var(--borde);border-radius:var(--r);padding:10px 13px;max-width:195px;box-shadow:var(--sh2);}
+.lt{font-family:var(--font-m);font-size:8px;letter-spacing:2px;color:var(--texto3);text-transform:uppercase;margin-bottom:8px;}
+.li{display:flex;align-items:center;gap:7px;margin-bottom:4px;font-family:var(--font-m);font-size:10px;color:var(--texto2);}
+.ld{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+/* Leaflet */
+.leaflet-container{background:#e8e4dc;}
+.leaflet-popup-content-wrapper{background:#fff;border:1px solid var(--borde);color:var(--texto);font-family:var(--font-b);border-radius:var(--r);box-shadow:var(--sh2);padding:0!important;overflow:hidden;min-width:190px;}
+.leaflet-popup-content{margin:0!important;}
+.leaflet-popup-tip{background:#fff;}
+.leaflet-popup-close-button{color:var(--texto3)!important;top:8px!important;right:8px!important;}
+
+/* Popup interno */
+.pw{padding:13px 14px 14px;}
+.pw-name{font-family:var(--font-d);font-size:13px;font-weight:700;margin-bottom:2px;}
+.pw-sub{font-family:var(--font-m);font-size:9px;color:var(--texto3);margin-bottom:11px;}
+.pr{display:grid;grid-template-columns:44px 1fr 40px;align-items:center;gap:6px;margin-bottom:3px;}
+.pr-sigla{font-family:var(--font-m);font-size:10px;font-weight:600;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pr-track{background:var(--bg3);border-radius:20px;height:8px;overflow:hidden;}
+.pr-fill{height:100%;border-radius:20px;}
+.pr-pct{font-family:var(--font-m);font-size:11px;font-weight:700;}
+
+/* Spinner */
+.sp{display:inline-block;width:13px;height:13px;border:2px solid var(--borde2);border-top-color:var(--acento);border-radius:50%;animation:spin .7s linear infinite;margin-right:5px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.est{font-family:var(--font-b);font-size:13px;color:var(--texto3);padding:28px 0;text-align:center;}
+.err-txt{color:var(--acento);}
+
+@media(max-width:680px){
+  .layout{flex-direction:column;}
+  aside{width:100%;min-width:unset;border-right:none;border-bottom:1px solid var(--borde);flex-direction:row;overflow-x:auto;padding:4px 0;}
+  .aside-sec{padding:0;display:flex;}
+  .aside-lbl,.aside-hr,.aside-totals{display:none;}
+  .nb{padding:8px 11px;white-space:nowrap;border-left:none;border-bottom:3px solid transparent;}
+  .nb.active{border-left:none;border-bottom-color:var(--acento);background:none;}
+  .mp{width:100%;min-width:unset;max-height:250px;border-left:none;border-top:1px solid var(--borde);}
+  .vm{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-left">
+    <div class="h-title">La Paz <em>2026</em></div>
+    <span class="h-pill">Subnacionales</span>
+  </div>
+  <div class="h-meta" id="hm">Fuente: <strong>OEP · SIREPRE</strong></div>
+</header>
+
+<div class="layout">
+  <aside>
+    <div class="aside-sec">
+      <div class="aside-lbl">Departamental</div>
+      <button class="nb active" data-cargo="gobernador" onclick="selCargo(this)"><span class="nb-icon">🏛</span>Gobernador/a</button>
+      <button class="nb" data-cargo="asambleista_poblacion" onclick="selCargo(this)"><span class="nb-icon">👥</span>Asamb. Población</button>
+      <button class="nb" data-cargo="asambleista_territorio" onclick="selCargo(this)"><span class="nb-icon">🗺</span>Asamb. Territorio</button>
+      <hr class="aside-hr">
+      <div class="aside-lbl">Municipal</div>
+      <button class="nb" data-cargo="alcalde" onclick="selCargo(this)"><span class="nb-icon">🏙</span>Alcalde/sa</button>
+      <button class="nb" data-cargo="concejal" onclick="selCargo(this)"><span class="nb-icon">🗳</span>Concejales</button>
+    </div>
+    <div class="aside-totals" id="aside-totals" style="display:none">
+      <div class="at-lbl">Top partidos (Dpto.)</div>
+      <div id="at-rows"></div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="tabs">
+      <button class="tb active" id="tt" onclick="selTab('tabla')">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        Resultados
+      </button>
+      <button class="tb" id="tm" onclick="selTab('mapa')">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 1.5l-5 1.5L1.5 1.5v11l4 2 5-1.5 4 1.5v-11l-4-2zm-5 11.3L1.5 11V3.2l4 1.3v8.3zm5-.3L5.5 14V5.5l5-1.5v8zm4 .5l-4-1.5V4.5l4 1.5v7z"/></svg>
+        Mapa por recinto
+      </button>
+    </div>
+
+    <div class="vt visible" id="vt">
+      <div class="vt-inner" id="tc"><div class="est"><span class="sp"></span>Cargando datos…</div></div>
+    </div>
+
+    <div class="vm" id="vm">
+      <div style="position:relative;flex:1;display:flex;flex-direction:column;">
+        <div id="mapa" style="flex:1;"></div>
+        <div class="mf" id="mf" style="display:none">
+          <select id="fp" onchange="filtrarMapa()"><option value="">Todas las provincias</option></select>
+          <select id="fm" onchange="filtrarMapa()"><option value="">Todos los municipios</option></select>
+        </div>
+        <div class="ml" id="mleg" style="display:none">
+          <div class="lt">Ganador por recinto</div>
+          <div id="li"></div>
+          <div class="li"><div class="ld" style="background:#ccc;border:1px solid #bbb"></div>Sin datos</div>
+        </div>
+      </div>
+
+      <div class="mp">
+        <div class="mp-top">
+          <div class="mp-lbl">Cargo visualizado</div>
+          <select class="cs" id="mc" onchange="cambiarCargoMapa()">
+            <option value="gobernador">Gobernador/a</option>
+            <option value="asambleista_poblacion">Asamb. Población</option>
+            <option value="asambleista_territorio">Asamb. Territorio</option>
+            <option value="alcalde">Alcalde/sa</option>
+            <option value="concejal">Concejales</option>
+          </select>
+        </div>
+        <div class="mp-hint" id="mhint">
+          <div class="mp-hint-ico">📍</div>
+          <div class="mp-hint-txt" id="mhint-txt">Haz clic en un punto del mapa para ver los resultados del recinto</div>
+        </div>
+        <div id="rdet">
+          <div class="rd-hdr">
+            <div class="rd-name" id="rcn"></div>
+            <div class="rd-sub" id="rcm"></div>
+            <button class="rd-close" onclick="cerrarDet()">✕ Cerrar</button>
+          </div>
+          <div class="rd-actas" id="rca" style="display:none">
+            <div class="rd-actas-row">
+              <span class="rd-actas-lbl">Actas computadas</span>
+              <span class="rd-actas-val" id="rcal"></span>
+            </div>
+            <div class="bar-track-thin"><div class="bar-fill-thin" id="rcaf" style="width:0"></div></div>
+          </div>
+          <div class="rd-stats" id="rcs"></div>
+          <div class="rd-cands">
+            <div class="rd-cands-ttl">Resultados por organización</div>
+            <div id="rcb"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const BASE = './resultados';
+const CARGOS = {
+  gobernador:             {titulo:'Gobernador / Gobernadora',        nivel:'departamento'},
+  asambleista_poblacion:  {titulo:'Asambleísta Dpto. por Población', nivel:'departamento'},
+  asambleista_territorio: {titulo:'Asambleísta por Territorio',      nivel:'provincia'},
+  alcalde:                {titulo:'Alcalde / Alcaldesa',             nivel:'municipio'},
+  concejal:               {titulo:'Concejales',                      nivel:'municipio'},
+};
+
+let cargoA='gobernador', tabA='tabla', cache={}, mapaOk=false;
+let L_mapa=null, rdatos=null, capaM=null, todosM=[], legC={};
+
+/* ── Utilidades ── */
+function fmt(n){ return n==null?'–':Number(n).toLocaleString('es-BO'); }
+
+// Usa el color del API directamente (ya son colores reales por partido)
+// Solo hace fallback si viene blanco/negro o vacío
+function pColor(sigla, apiColor){
+  if(apiColor && !/^#(000|fff|ffffff|000000|FAF0CA)$/i.test(apiColor) && apiColor.trim()) return apiColor;
+  if(!sigla) return '#bbb';
+  let h=0; for(let i=0;i<sigla.length;i++) h=sigla.charCodeAt(i)+((h<<5)-h);
+  return `hsl(${(Math.abs(h)%280)+30},55%,42%)`;
+}
+
+async function cargar(nombre){
+  if(cache[nombre]) return cache[nombre];
+  const r = await fetch(`${BASE}/${nombre}.json`);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return cache[nombre] = await r.json();
+}
+
+/* ── Navegación ── */
+function selCargo(btn){
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  cargoA = btn.dataset.cargo;
+  document.getElementById('mc').value = cargoA;
+  if(tabA==='tabla') renderTabla();
+  else { legC={}; actualizarLeg(); cerrarDet(); dibujarMapa(); }
+}
+function selTab(tab){
+  tabA = tab;
+  ['tt','tm'].forEach(id => document.getElementById(id).classList.toggle('active', id===(tab==='tabla'?'tt':'tm')));
+  document.getElementById('vt').classList.toggle('visible', tab==='tabla');
+  document.getElementById('vm').classList.toggle('visible', tab==='mapa');
+  if(tab==='tabla') renderTabla();
+  if(tab==='mapa' && !mapaOk) iniciarMapa();
+}
+function cambiarCargoMapa(){
+  cargoA = document.getElementById('mc').value;
+  document.querySelectorAll('.nb').forEach(b=>b.classList.toggle('active',b.dataset.cargo===cargoA));
+  legC={}; actualizarLeg(); cerrarDet(); dibujarMapa();
+}
+
+/* ── Bloques HTML reutilizables ── */
+function htmlActas(tabla){
+  if(!tabla) return '';
+  const ac=tabla.find(x=>x.nombre==='Total Actas Computadas');
+  const ha=tabla.find(x=>x.nombre==='Total Actas Habilitadas');
+  if(!ac||!ha||!ha.valor) return '';
+  const pc=(ac.valor/ha.valor*100).toFixed(1);
+  return `<div class="actas-card">
+    <div class="actas-row"><span class="actas-lbl">Actas computadas</span><span class="actas-val">${fmt(ac.valor)} / ${fmt(ha.valor)} <em>(${pc}%)</em></span></div>
+    <div class="bar-track-thin"><div class="bar-fill-thin" style="width:${pc}%"></div></div>
+  </div>`;
+}
+
+function htmlStats(tabla){
+  if(!tabla) return '';
+  return `<div class="stats-g">${[
+    {l:'Votos Válidos',k:'Votos Válidos'},
+    {l:'Votos Blancos',k:'Votos Blancos'},
+    {l:'Votos Nulos',  k:'Total Votos Nulos'},
+    {l:'Votos Emitidos',k:'Votos Emitidos'},
+  ].map(({l,k})=>{
+    const r=tabla.find(x=>x.nombre===k);
+    return r?`<div class="stat-c"><div class="l">${l}</div><div class="v">${fmt(r.valor)}</div>${r.porcentaje!=null?`<div class="p">${r.porcentaje}%</div>`:''}</div>`:'';
+  }).join('')}</div>`;
+}
+
+function htmlBarras(grafica){
+  if(!grafica?.length) return '<div class="est">Sin datos</div>';
+  const sorted=[...grafica].filter(x=>x.sigla&&x.sigla.trim()).sort((a,b)=>(b.porcien||0)-(a.porcien||0));
+  if(!sorted.length) return '<div class="est">Sin datos</div>';
+  const mx=Math.max(...sorted.map(x=>x.porcien||0));
+  return `<div class="result-card">${sorted.map(x=>{
+    const c=pColor(x.sigla,x.color), w=mx>0?(x.porcien/mx*100):0;
+    return `<div class="br">
+      <span class="br-sigla" title="${x.nombre||x.sigla}">${x.sigla}</span>
+      <div class="br-track"><div class="br-fill" style="width:${w}%;background:${c}"></div></div>
+      <span class="br-pct" style="color:${c}">${(x.porcien||0).toFixed(2)}%</span>
+    </div>
+    <div class="br-votos">${fmt(x.valor)} votos</div>`;
+  }).join('')}</div>`;
+}
+
+/* ── Render tabla principal ── */
+async function renderTabla(){
+  const el=document.getElementById('tc'), cfg=CARGOS[cargoA];
+  if(el.dataset.cargo===cargoA) return;
+  el.dataset.cargo=cargoA;
+  el.innerHTML=`<div class="est"><span class="sp"></span>Cargando datos…</div>`;
+  try{
+    const j=await cargar(cargoA);
+    const scopeLbl=cfg.nivel==='departamento'?'Departamento La Paz':cfg.nivel==='provincia'?'Por provincia':'Por municipio';
+    let html=`<div class="ph"><h2>${cfg.titulo}</h2><span class="ph-scope">${scopeLbl}</span></div>`;
+
+    if(cfg.nivel==='departamento'){
+      html+=htmlActas(j.data?.tabla)+htmlStats(j.data?.tabla);
+      html+=`<div class="result-lbl">Resultados por organización política</div>`;
+      html+=htmlBarras(j.data?.grafica);
+      renderSidebarTotals(j.data?.grafica);
+
+    }else if(cfg.nivel==='provincia'){
+      const ps=Object.keys(j.provincias);
+      window._rp=n=>{const d=j.provincias[n]?.data;return htmlActas(d?.tabla)+htmlStats(d?.tabla)+'<div class="result-lbl">Resultados por organización</div>'+htmlBarras(d?.grafica);};
+      html+=`<div class="filter-row"><select class="fs" id="sp" onchange="document.getElementById('sc').innerHTML=_rp(this.value)">${ps.map(p=>`<option>${p}</option>`).join('')}</select></div><div id="sc">${window._rp(ps[0])}</div>`;
+
+    }else{
+      // municipio: j.municipios["Provincia / Municipio"] = { provincia, provincia_id, municipio_id, data:{tabla,grafica} }
+      const ms=Object.keys(j.municipios);
+      const bp={};
+      ms.forEach(k=>{const p=j.municipios[k].provincia;if(!bp[p])bp[p]=[];bp[p].push(k);});
+      const ps=Object.keys(bp).sort();
+      window._rm=k=>{const d=j.municipios[k]?.data;return htmlActas(d?.tabla)+htmlStats(d?.tabla)+'<div class="result-lbl">Resultados por organización</div>'+htmlBarras(d?.grafica);};
+      window._mo=p=>bp[p].map(k=>`<option value="${k}">${k.split(' / ')[1]||k}</option>`).join('');
+      html+=`<div class="filter-row">
+        <select class="fs" id="sp2" onchange="document.getElementById('sm2').innerHTML=_mo(this.value);document.getElementById('mc2').innerHTML=_rm(document.getElementById('sm2').value)">${ps.map(p=>`<option>${p}</option>`).join('')}</select>
+        <select class="fs" id="sm2" onchange="document.getElementById('mc2').innerHTML=_rm(this.value)">${window._mo(ps[0])}</select>
+      </div><div id="mc2">${window._rm(bp[ps[0]][0])}</div>`;
+    }
+    el.innerHTML=html;
+  }catch(e){
+    el.innerHTML=`<div class="est err-txt">Error al cargar: ${e.message}</div>`;
+  }
+}
+
+function renderSidebarTotals(grafica){
+  if(!grafica?.length) return;
+  const sorted=[...grafica].filter(x=>x.sigla&&x.sigla.trim()).sort((a,b)=>(b.porcien||0)-(a.porcien||0)).slice(0,6);
+  document.getElementById('at-rows').innerHTML=sorted.map(x=>`
+    <div class="at-row">
+      <div class="at-dot" style="background:${pColor(x.sigla,x.color)}"></div>
+      <span class="at-name" title="${x.nombre||x.sigla}">${x.sigla}</span>
+      <span class="at-pct">${(x.porcien||0).toFixed(1)}%</span>
+    </div>`).join('');
+  document.getElementById('aside-totals').style.display='block';
+}
+
+/* ── Mapa ── */
+async function iniciarMapa(){
+  mapaOk=true;
+  L_mapa=L.map('mapa',{zoomControl:true,preferCanvas:true}).setView([-16.5,-68.15],9);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+    attribution:'© OpenStreetMap contributors © CARTO',subdomains:'abcd',maxZoom:19
+  }).addTo(L_mapa);
+
+  try{
+    const r=await fetch(`${BASE}/recintos_resultados.json`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    rdatos=await r.json();
+    if(rdatos.actualizado){
+      const d=new Date(rdatos.actualizado);
+      document.getElementById('hm').innerHTML=`Fuente: <strong>OEP · SIREPRE</strong> &nbsp;·&nbsp; Act.: <strong>${d.toLocaleString('es-BO',{timeZone:'America/La_Paz'})}</strong>`;
+    }
+  }catch(e){
+    try{
+      const r2=await fetch(`${BASE}/recintos.json`);
+      if(!r2.ok) throw new Error();
+      const base=await r2.json();
+      rdatos={recintos:{}};
+      // recintos.json tiene { total, recintos: [...] }
+      base.recintos.forEach(rc=>{
+        rdatos.recintos[`${rc.locality_id}-${rc.recinto_id}`]={...rc,gobernador:null};
+      });
+      document.getElementById('mhint-txt').innerHTML='Los puntos aparecen sin color porque <strong>recintos_resultados.json</strong> aún no fue generado. Se creará en la próxima ejecución del workflow.';
+    }catch{
+      document.getElementById('mhint-txt').innerHTML='<span style="color:var(--acento)">No se encontró recintos.json en /resultados/</span>';
+      return;
+    }
+  }
+
+  const provs=[...new Set(Object.values(rdatos.recintos).map(r=>r.provincia))].sort();
+  const fp=document.getElementById('fp');
+  provs.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;fp.appendChild(o);});
+  document.getElementById('mf').style.display='flex';
+  document.getElementById('mleg').style.display='block';
+  dibujarMapa();
+}
+
+// Extrae la grafica del recinto para el cargo activo
+// recintos_resultados guarda: rec.gobernador = { grafica:[], tabla:[], fecha:'' }  (respuesta directa del API)
+function getGrafica(rec){
+  const dato=rec[cargoA]||rec.gobernador;
+  if(!dato) return [];
+  // La respuesta del API viene como { grafica, tabla, fecha } directamente
+  // (fetch.py guarda data directamente, no anidado bajo .data)
+  return (dato.grafica||dato.data?.grafica||[]).filter(x=>x.sigla&&x.sigla.trim());
+}
+function getTabla(rec){
+  const dato=rec[cargoA]||rec.gobernador;
+  if(!dato) return null;
+  return dato.tabla||dato.data?.tabla||null;
+}
+
+function dibujarMapa(){
+  if(!L_mapa||!rdatos) return;
+  if(capaM) L_mapa.removeLayer(capaM);
+  capaM=L.layerGroup().addTo(L_mapa);
+  todosM=[];
+
+  const pF=document.getElementById('fp')?.value||'';
+  const mF=document.getElementById('fm')?.value||'';
+
+  Object.entries(rdatos.recintos).forEach(([key,rec])=>{
+    if(pF&&rec.provincia!==pF) return;
+    if(mF&&rec.municipio!==mF) return;
+
+    const graf=getGrafica(rec);
+    let gSigla=null, gColor='#ccc';
+    if(graf.length){
+      const top=[...graf].sort((a,b)=>(b.porcien||0)-(a.porcien||0))[0];
+      gSigla=top.sigla; gColor=pColor(top.sigla,top.color);
+      if(gSigla&&!legC[gSigla]){legC[gSigla]=gColor;actualizarLeg();}
+    }
+
+    const radio=Math.max(5,Math.min(14,5+Math.log10(Math.max(rec.inscritos||10,10))*2.2));
+    const sinDatos=gColor==='#ccc';
+
+    const m=L.circleMarker([rec.lat,rec.lon],{
+      radius:radio, fillColor:gColor,
+      color:sinDatos?'#aaa':'rgba(255,255,255,.8)',
+      weight:sinDatos?1:1.5, opacity:.9,
+      fillOpacity:sinDatos?.4:.82,
+    }).addTo(capaM);
+
+    m._rec=rec; m._key=key;
+    m.on('click',()=>mostrarDet(rec,m));
+
+    // Popup (click/hover)
+    if(graf.length){
+      const top4=[...graf].sort((a,b)=>(b.porcien||0)-(a.porcien||0)).slice(0,4);
+      const mx4=Math.max(...top4.map(x=>x.porcien||0));
+      const rows=top4.map(x=>{
+        const c=pColor(x.sigla,x.color), w=mx4>0?(x.porcien/mx4*100):0;
+        return `<div class="pr">
+          <span class="pr-sigla" style="color:${c}">${x.sigla}</span>
+          <div class="pr-track"><div class="pr-fill" style="width:${w}%;background:${c}"></div></div>
+          <span class="pr-pct" style="color:${c}">${(x.porcien||0).toFixed(1)}%</span>
+        </div>`;
+      }).join('');
+      m.bindPopup(L.popup({closeButton:true,maxWidth:240}).setContent(
+        `<div class="pw"><div class="pw-name">${rec.nombre}</div><div class="pw-sub">${rec.municipio} · ${fmt(rec.inscritos)} inscritos · ${rec.mesas} mesas</div>${rows}</div>`
+      ));
+    }
+    todosM.push(m);
+  });
+}
+
+function filtrarMapa(){
+  const p=document.getElementById('fp').value;
+  const fm=document.getElementById('fm');
+  const ms=[...new Set(Object.values(rdatos.recintos).filter(r=>!p||r.provincia===p).map(r=>r.municipio))].sort();
+  fm.innerHTML='<option value="">Todos los municipios</option>';
+  ms.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;fm.appendChild(o);});
+  dibujarMapa();
+  const f=Object.values(rdatos.recintos).filter(r=>!p||r.provincia===p);
+  if(f.length&&p){const la=f.map(r=>r.lat),lo=f.map(r=>r.lon);L_mapa.fitBounds([[Math.min(...la),Math.min(...lo)],[Math.max(...la),Math.max(...lo)]],{padding:[50,50]});}
+}
+
+/* ── Panel detalle recinto ── */
+function mostrarDet(rec, marcador){
+  todosM.forEach(m=>m.setStyle({weight:m===marcador?3:1.5,color:m===marcador?'#222':'rgba(255,255,255,.8)'}));
+  document.getElementById('mhint').style.display='none';
+  document.getElementById('rdet').style.display='flex';
+
+  document.getElementById('rcn').textContent=rec.nombre;
+  document.getElementById('rcm').innerHTML=`${rec.municipio} · ${rec.provincia}<br><em>${rec.mesas} mesas</em> &nbsp;·&nbsp; ${fmt(rec.inscritos)} inscritos`;
+
+  const graf=getGrafica(rec);
+  const tabla=getTabla(rec);
+
+  // Actas
+  if(tabla){
+    const ac=tabla.find(t=>t.nombre==='Total Actas Computadas');
+    const ha=tabla.find(t=>t.nombre==='Total Actas Habilitadas');
+    if(ac&&ha&&ha.valor){
+      const pc=(ac.valor/ha.valor*100).toFixed(1);
+      document.getElementById('rca').style.display='block';
+      document.getElementById('rcal').textContent=`${fmt(ac.valor)} / ${fmt(ha.valor)} (${pc}%)`;
+      document.getElementById('rcaf').style.width=pc+'%';
+    }else document.getElementById('rca').style.display='none';
+    // Stats
+    document.getElementById('rcs').innerHTML=[
+      {l:'Válidos',k:'Votos Válidos'},{l:'Emitidos',k:'Votos Emitidos'},
+      {l:'Blancos',k:'Votos Blancos'},{l:'Nulos',k:'Total Votos Nulos'},
+    ].map(({l,k})=>{const r=tabla.find(t=>t.nombre===k);return r?`<div class="rd-stat"><div class="l">${l}</div><div class="v">${fmt(r.valor)}</div>${r.porcentaje!=null?`<div class="p">${r.porcentaje}%</div>`:''}</div>`:''}).join('');
+  }else{
+    document.getElementById('rca').style.display='none';
+    document.getElementById('rcs').innerHTML='';
+  }
+
+  // Barras candidatos
+  if(graf.length){
+    const sorted=[...graf].sort((a,b)=>(b.porcien||0)-(a.porcien||0));
+    const mx=Math.max(...sorted.map(x=>x.porcien||0));
+    document.getElementById('rcb').innerHTML=sorted.map(x=>{
+      const c=pColor(x.sigla,x.color), w=mx>0?(x.porcien/mx*100):0;
+      return `<div class="cr">
+        <span class="cr-sigla" title="${x.nombre||x.sigla}">${x.sigla}</span>
+        <div class="cr-track"><div class="cr-fill" style="width:${w}%;background:${c}"></div></div>
+        <span class="cr-pct" style="color:${c}">${(x.porcien||0).toFixed(1)}%</span>
+      </div>
+      <div class="cr"><span></span><span class="cr-votos">${fmt(x.valor)} votos</span></div>`;
+    }).join('');
+  }else{
+    document.getElementById('rcb').innerHTML='<div class="est" style="padding:14px;font-size:12px">Sin resultados para este recinto</div>';
+  }
+}
+
+function cerrarDet(){
+  todosM.forEach(m=>m.setStyle({weight:1.5,color:'rgba(255,255,255,.8)'}));
+  document.getElementById('mhint').style.display='flex';
+  document.getElementById('rdet').style.display='none';
+}
+
+function actualizarLeg(){
+  document.getElementById('li').innerHTML=Object.entries(legC).slice(0,9)
+    .map(([s,c])=>`<div class="li"><div class="ld" style="background:${c}"></div>${s}</div>`).join('');
+}
+
+async function cargarMeta(){
+  try{
+    const m=await cargar('meta');
+    const d=m.actualizado?new Date(m.actualizado):null;
+    document.getElementById('hm').innerHTML=
+      `Fuente: <strong>OEP · SIREPRE</strong>`+
+      (d?` &nbsp;·&nbsp; Act.: <strong>${d.toLocaleString('es-BO',{timeZone:'America/La_Paz'})}</strong>`:'');
+  }catch(e){}
+}
+
+renderTabla();
+cargarMeta();
+</script>
+</body>
+</html>
