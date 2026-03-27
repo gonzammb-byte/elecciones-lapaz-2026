@@ -1,9 +1,9 @@
 name: Actualizar resultados OEP
 
-"on":
+on:
   schedule:
     - cron: '0 * * * *'   # cada hora
-  workflow_dispatch:        # también se puede correr manualmente
+  workflow_dispatch:
 
 permissions:
   contents: write
